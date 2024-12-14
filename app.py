@@ -45,13 +45,14 @@ def get_file_mod_times(directory):
     """Get the modification times of all files in the directory."""
     return {f: os.path.getmtime(os.path.join(directory, f)) for f in os.listdir(directory) if f.endswith(".pdf")}
 
-# Reload vector store if new documents are added
+# Reload vector store if needed
 def reload_vector_store_if_needed():
+    global vector_store
     current_mod_times = get_file_mod_times("hidden_docs")
     if "file_mod_times" not in st.session_state or st.session_state["file_mod_times"] != current_mod_times:
         st.session_state["file_mod_times"] = current_mod_times
         document_texts = load_hidden_pdfs()
-        return create_vector_store(document_texts)
+        vector_store = create_vector_store(document_texts)
     return vector_store
 
 # Validate email
