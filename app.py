@@ -47,13 +47,30 @@ def get_file_mod_times(directory):
 
 # Reload vector store if needed
 def reload_vector_store_if_needed():
-    global vector_store
     current_mod_times = get_file_mod_times("hidden_docs")
+
+    # Check if file modifications have occurred
     if "file_mod_times" not in st.session_state or st.session_state["file_mod_times"] != current_mod_times:
         st.session_state["file_mod_times"] = current_mod_times
         document_texts = load_hidden_pdfs()
-        vector_store = create_vector_store(document_texts)
+        vector_store = create_vector_store(document_texts)  # Create vector store
+        st.session_state["vector_store"] = vector_store    # Save in session state
+    else:
+        # Retrieve from session state if already initialized
+        vector_store = st.session_state.get("vector_store", None)
+
+    # Return the vector store (even if None)
     return vector_store
+
+# Load model and vector store
+model = load_model()
+
+# Initialize vector_store
+vector_store = reload_vector_store_if_needed()
+
+# If still None, raise an error to debug initialization
+if vector_store is None:
+    raise ValueError("Failed to initialize vector_store. Ensure hidden_docs folder and embeddings setup are correct.")
 
 # Validate email
 def is_valid_email(email):
