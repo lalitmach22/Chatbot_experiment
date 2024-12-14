@@ -71,7 +71,7 @@ vector_store = reload_vector_store_if_needed()
 # If still None, raise an error to debug initialization
 if vector_store is None:
     raise ValueError("Failed to initialize vector_store. Ensure hidden_docs folder and embeddings setup are correct.")
-
+#####LALIT lalitmach22@gmail.com
 # Validate email
 def is_valid_email(email):
     email_regex = r"^\d{2}f\d{7}@ds\.study\.iitm\.ac\.in$"
