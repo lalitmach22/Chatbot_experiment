@@ -5,7 +5,14 @@ import json
 from datetime import datetime, timedelta
 import pytz
 from docx import Document  # For .docx
-import pandas as pd 
+import pandas as pd
+from PyPDFLoader import PyPDFLoader
+from bs4 import BeautifulSoup
+import json
+import yaml
+from pptx import Presentation
+from zipfile import ZipFile
+import mimetypes 
 from langchain_groq import ChatGroq
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.chains import ConversationalRetrievalChain
@@ -29,32 +36,93 @@ def load_model():
 @st.cache_data
 def load_hidden_documents(directory="hidden_docs"):
     all_texts = []
+
     for filename in os.listdir(directory):
         file_path = os.path.join(directory, filename)
-        
-        # Handle PDF files
-        if filename.endswith(".pdf"):
-            loader = PyPDFLoader(file_path)
-            pages = loader.load_and_split()
-            all_texts.extend([page.page_content for page in pages])
-        
-        # Handle Word files (.docx)
-        elif filename.endswith(".docx"):
-            doc = Document(file_path)
-            text = "\n".join([paragraph.text for paragraph in doc.paragraphs])
-            all_texts.append(text)
-        
-        # Handle Text files (.txt)
-        elif filename.endswith(".txt"):
-            with open(file_path, "r", encoding="utf-8") as file:
-                all_texts.append(file.read())
-        
-        # Handle Excel files (.xlsx)
-        elif filename.endswith(".xlsx"):
-            excel_data = pd.read_excel(file_path)
-            text = excel_data.to_string(index=False)
-            all_texts.append(text)
-        
+        mime_type, _ = mimetypes.guess_type(file_path)
+
+        try:
+            # Handle PDF files
+            if filename.endswith(".pdf"):
+                loader = PyPDFLoader(file_path)
+                pages = loader.load_and_split()
+                all_texts.extend([page.page_content for page in pages])
+
+            # Handle Word files (.docx)
+            elif filename.endswith(".docx"):
+                doc = Document(file_path)
+                text = "\n".join([paragraph.text for paragraph in doc.paragraphs])
+                all_texts.append(text)
+
+            # Handle Text files (.txt)
+            elif filename.endswith(".txt"):
+                with open(file_path, "r", encoding="utf-8") as file:
+                    all_texts.append(file.read())
+
+            # Handle Excel files (.xlsx and .xls)
+            elif filename.endswith(('.xlsx', '.xls')):
+                excel_data = pd.read_excel(file_path)
+                text = excel_data.to_string(index=False)
+                all_texts.append(text)
+
+            # Handle CSV files (.csv)
+            elif filename.endswith(".csv"):
+                csv_data = pd.read_csv(file_path)
+                text = csv_data.to_string(index=False)
+                all_texts.append(text)
+
+            # Handle Markdown files (.md)
+            elif filename.endswith(".md"):
+                with open(file_path, "r", encoding="utf-8") as file:
+                    all_texts.append(file.read())
+
+            # Handle HTML files (.html, .htm)
+            elif filename.endswith(('.html', '.htm')):
+                with open(file_path, "r", encoding="utf-8") as file:
+                    soup = BeautifulSoup(file, "html.parser")
+                    all_texts.append(soup.get_text())
+
+            # Handle JSON files (.json)
+            elif filename.endswith(".json"):
+                with open(file_path, "r", encoding="utf-8") as file:
+                    data = json.load(file)
+                    all_texts.append(json.dumps(data, indent=2))
+
+            # Handle YAML files (.yaml, .yml)
+            elif filename.endswith(('.yaml', '.yml')):
+                with open(file_path, "r", encoding="utf-8") as file:
+                    data = yaml.safe_load(file)
+                    all_texts.append(json.dumps(data, indent=2))
+
+            # Handle PowerPoint files (.pptx)
+            elif filename.endswith(".pptx"):
+                presentation = Presentation(file_path)
+                for slide in presentation.slides:
+                    slide_text = []
+                    for shape in slide.shapes:
+                        if shape.has_text_frame:
+                            slide_text.append(shape.text)
+                    all_texts.append("\n".join(slide_text))
+
+            # Handle ZIP files (.zip)
+            elif filename.endswith(".zip"):
+                with ZipFile(file_path, 'r') as zip_ref:
+                    zip_ref.extractall("temp_extracted")
+                    all_texts.extend(load_hidden_documents("temp_extracted"))
+
+            # Handle Log files (.log)
+            elif filename.endswith(".log"):
+                with open(file_path, "r", encoding="utf-8") as file:
+                    all_texts.append(file.read())
+
+            # Handle unknown file types (fallback to text-based reading)
+            elif mime_type and mime_type.startswith("text"):
+                with open(file_path, "r", encoding="utf-8") as file:
+                    all_texts.append(file.read())
+
+        except Exception as e:
+            print(f"Failed to process {filename}: {e}")
+
     return all_texts
 
 # Create vector store
