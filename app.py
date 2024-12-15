@@ -3,6 +3,7 @@ import streamlit as st
 import re
 import json
 from datetime import datetime, timedelta
+import pytz
 from langchain_groq import ChatGroq
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.chains import ConversationalRetrievalChain
@@ -79,19 +80,26 @@ def is_valid_email(email):
 
 # Save session to Supabase
 def save_session_to_supabase(email, name, chat_history):
+    # Define IST timezone
+    ist = pytz.timezone("Asia/Kolkata")
+    
     for question, answer in chat_history:
+        # Get current datetime in IST and format as "YYYY-MM-DD HH:MM"
+        timestamp = datetime.now(ist).strftime("%Y-%m-%d %H:%M")
+        
         data = {
             "email": email,
             "name": name if name else None,
             "question": question,
             "answer": answer,
-            "timestamp": datetime.now().isoformat(),  # Add timestamp
+            "timestamp": timestamp,  # Add IST timestamp
         }
         response = supabase.table("chat_sessions").insert(data).execute()
         if "error" in response:
             st.error(f"Error saving session data to Supabase: {response['error']['message']}")
             return False
     return True
+
 
 # Streamlit app
 st.title("BDM Chatbot")
