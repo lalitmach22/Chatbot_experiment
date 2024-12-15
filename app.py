@@ -107,7 +107,7 @@ st.write("Developed by Lalit & Puneet of BS, IIT Madras")
 st.write("Ask questions directly based on the preloaded BDM documents.")
 st.write("Note - Once your queries are complete, please put the last query as \"stop\".")
 st.write("Disclaimer - All data, including questions and answers, is collected for improving the bot’s functionality. By using this bot, you consent to this data being stored.")
-
+st.write("Disclaimer - The answers provided by this chatbot are generated based on the information available at the time of the query and may not always be accurate or comprehensive. For verified and detailed information, please refer to the official project documents or consult the relevant team members/mentors.")
 # Load model and vector store
 model = load_model()
 vector_store = reload_vector_store_if_needed()
