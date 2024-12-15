@@ -193,6 +193,8 @@ if st.session_state["email_validated"]:
             st.session_state["chat_history"].append((user_input, answer))
             
             # Display the chat history
-            for i, (question, reply) in enumerate(st.session_state["chat_history"], 1):
+            # Display the chat history (most recent first)
+            for i, (question, reply) in enumerate(reversed(st.session_state["chat_history"]), 1):
                 st.write(f"Q{i}: {question}")
                 st.write(f"Chatbot: {reply}")
+
