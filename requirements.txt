@@ -8,3 +8,11 @@ faiss-cpu
 supabase
 streamlit-analytics
 pytz
+pandas
+python-docx
+beautifulsoup4
+pyyaml
+python-pptx
+xlrd
+openpyxl
+
