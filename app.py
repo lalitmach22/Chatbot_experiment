@@ -85,6 +85,7 @@ def save_session_to_supabase(email, name, chat_history):
             "name": name if name else None,
             "question": question,
             "answer": answer,
+            "timestamp": datetime.now().isoformat(),  # Add timestamp
         }
         response = supabase.table("chat_sessions").insert(data).execute()
         if "error" in response:
@@ -133,10 +134,13 @@ if elapsed_time > timedelta(minutes=30):
     
     # Download session data
     session_data = {
-        "email": email,
-        "name": name,
-        "chat_history": st.session_state["chat_history"]
-    }
+    "email": email,
+    "name": name,
+    "chat_history": [
+        {"question": q, "answer": a, "timestamp": datetime.now().isoformat()}
+        for q, a in st.session_state["chat_history"]
+    ]
+}
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"session_data_{timestamp}.json"
     st.download_button(
