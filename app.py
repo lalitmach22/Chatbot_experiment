@@ -6,7 +6,6 @@ from datetime import datetime, timedelta
 import pytz
 from docx import Document  # For .docx
 import pandas as pd
-from PyPDFLoader import PyPDFLoader
 from bs4 import BeautifulSoup
 import json
 import yaml
