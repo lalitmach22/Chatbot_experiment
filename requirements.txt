@@ -8,3 +8,5 @@ faiss-cpu
 supabase
 streamlit-analytics
 pytz
+pandas
+python-docx
