@@ -4,6 +4,8 @@ import re
 import json
 from datetime import datetime, timedelta
 import pytz
+from docx import Document  # For .docx
+import pandas as pd 
 from langchain_groq import ChatGroq
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.chains import ConversationalRetrievalChain
@@ -25,13 +27,34 @@ def load_model():
 
 # Load PDF files
 @st.cache_data
-def load_hidden_pdfs(directory="hidden_docs"):
+def load_hidden_documents(directory="hidden_docs"):
     all_texts = []
     for filename in os.listdir(directory):
+        file_path = os.path.join(directory, filename)
+        
+        # Handle PDF files
         if filename.endswith(".pdf"):
-            loader = PyPDFLoader(os.path.join(directory, filename))
+            loader = PyPDFLoader(file_path)
             pages = loader.load_and_split()
             all_texts.extend([page.page_content for page in pages])
+        
+        # Handle Word files (.docx)
+        elif filename.endswith(".docx"):
+            doc = Document(file_path)
+            text = "\n".join([paragraph.text for paragraph in doc.paragraphs])
+            all_texts.append(text)
+        
+        # Handle Text files (.txt)
+        elif filename.endswith(".txt"):
+            with open(file_path, "r", encoding="utf-8") as file:
+                all_texts.append(file.read())
+        
+        # Handle Excel files (.xlsx)
+        elif filename.endswith(".xlsx"):
+            excel_data = pd.read_excel(file_path)
+            text = excel_data.to_string(index=False)
+            all_texts.append(text)
+        
     return all_texts
 
 # Create vector store
@@ -53,7 +76,7 @@ def reload_vector_store_if_needed():
     # Check if file modifications have occurred
     if "file_mod_times" not in st.session_state or st.session_state["file_mod_times"] != current_mod_times:
         st.session_state["file_mod_times"] = current_mod_times
-        document_texts = load_hidden_pdfs()
+        document_texts = load_hidden_documents()
         vector_store = create_vector_store(document_texts)  # Create vector store
         st.session_state["vector_store"] = vector_store    # Save in session state
     else:
