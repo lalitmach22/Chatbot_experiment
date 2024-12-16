@@ -126,14 +126,16 @@ def load_hidden_documents(directory="hidden_docs"):
 
 @st.cache_data
 def save_to_supabase(all_texts):
-    """Save all texts to the Supabase 'all_texts' table in a single batch."""
-    data = [{"all_texts": text} for text in all_texts]  # Prepare data for batch insert
-    response = supabase.table("all_texts").insert(data).execute()
-
-    if response.status_code == 201:
-        print("Successfully saved all texts to Supabase.")
-    else:
-        print(f"Failed to save texts. Status Code: {response.status_code}, Response: {response.data}")
+    """Save the list of documents to the Supabase 'all_texts' table."""
+    for text in all_texts:
+        data = {"all_texts": text}
+        response = supabase.table("all_texts").insert(data).execute()
+        
+        # Check the response for success or failure
+        if response.data:  # If the response contains data, the insert was successful
+            print(f"Successfully saved: {text[:30]}...")
+        elif response.error:  # If there is an error
+            print(f"Failed to save text. Error: {response.error.message}")
 
 
 # Load documents and save to Supabase
