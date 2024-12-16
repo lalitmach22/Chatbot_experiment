@@ -49,18 +49,25 @@ def clean_text(text):
 
     return text
 
-@st.cache_data
-@st.cache_data
 def load_hidden_documents(directory="hidden_docs"):
-    """Load all supported file types from the hidden_docs bucket and return their content."""
+    """Load all supported file types from the given directory and return their content."""
     all_texts = []
 
-    for filename in os.listdir(directory):
+    for file_name in os.listdir(directory):
+        st.write(file_name)
+        file_path = os.path.join(directory, file_name)
+        
+        # Read file content
+        with open(file_path, "rb") as file:
+            file_content = file.read()
+        
+        # Determine MIME type (if necessary)
+        mime_type, _ = mimetypes.guess_type(file_name)
+        
         # Handle PDF files
         if file_name.endswith(".pdf"):
-            loader = PyPDFLoader(BytesIO(file_content))
-            pages = loader.load_and_split()
-            all_texts.extend([page.page_content for page in pages])
+            reader = PdfReader(BytesIO(file_content))
+            all_texts.extend([page.extract_text() for page in reader.pages])
 
         # Handle Word files (.docx)
         elif file_name.endswith(".docx"):
@@ -111,14 +118,15 @@ def load_hidden_documents(directory="hidden_docs"):
                 for shape in slide.shapes:
                     if shape.has_text_frame:
                         slide_text.append(shape.text)
-                        all_texts.append("\n".join(slide_text))
+                all_texts.append("\n".join(slide_text))
 
         # Handle ZIP files (.zip)
         elif file_name.endswith(".zip"):
-            with zipfile.ZipFile(BytesIO(file_content), 'r') as zip_ref:
-                zip_ref.extractall(temp_dir)
-                # Recursively process files in the ZIP
-                all_texts.extend(load_hidden_documents(temp_dir))
+            with TemporaryDirectory() as temp_dir:
+                with zipfile.ZipFile(BytesIO(file_content), 'r') as zip_ref:
+                    zip_ref.extractall(temp_dir)
+                    # Recursively process files in the ZIP
+                    all_texts.extend(load_hidden_documents(temp_dir))
 
         # Handle Log files (.log)
         elif file_name.endswith(".log"):
@@ -128,7 +136,7 @@ def load_hidden_documents(directory="hidden_docs"):
         elif mime_type and mime_type.startswith("text"):
             all_texts.append(file_content.decode("utf-8"))
 
-    #clean and return all the extracted texts
+    # Clean and return all extracted texts
     cleaned_texts = [clean_text(text) for text in all_texts]
     return cleaned_texts
 
