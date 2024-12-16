@@ -41,16 +41,16 @@ def encrypt_file(file_path):
     with open(file_path, "wb") as file:
         file.write(encrypted_data)
 
-def encrypt_all_files_in_folder(folder_path):
+def encrypt_all_files_in_folder(directory="hidden_docs"):
     """Encrypts all files in a folder."""
-    for root, _, files in os.walk(folder_path):
+    for root, _, files in os.walk(directory):
         for file_name in files:
             file_path = os.path.join(root, file_name)
             encrypt_file(file_path)
             print(f"Encrypted: {file_path}")
 
 # Encrypt files in 'hidden_docs'
-encrypt_all_files_in_folder(directory="hidden_docs")
+encrypt_all_files_in_folder()
 
 # Load the model
 @st.cache_resource
