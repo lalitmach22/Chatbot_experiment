@@ -16,8 +16,8 @@ import tempfile
 from langchain_groq import ChatGroq
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.chains import ConversationalRetrievalChain
-from langchain.vectorstores import FAISS
-from langchain.embeddings import HuggingFaceEmbeddings
+from langchain_community.vectorstores import FAISS
+from langchain_community.embeddings import HuggingFaceEmbeddings
 from supabase import create_client, Client
 
 # Supabase credentials
