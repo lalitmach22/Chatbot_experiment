@@ -19,14 +19,38 @@ from langchain.chains import ConversationalRetrievalChain
 from langchain.vectorstores import FAISS
 from langchain.embeddings import HuggingFaceEmbeddings
 from supabase import create_client, Client
+from cryptography.fernet import Fernet
 
-# Supabase credentials
+
 # Supabase credentials
 url = os.getenv("url")
 key = os.getenv("key")
 supabase: Client = create_client(url, key)
-
+# Encryption Key
+encryption_key = os.getenv("encryption_key")
+fernet = Fernet(encryption_key)
+#Groq key
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+
+### Encrypt files in hidden_doc
+def encrypt_file(file_path):
+    """Encrypts a file."""
+    with open(file_path, "rb") as file:
+        data = file.read()
+    encrypted_data = fernet.encrypt(data)
+    with open(file_path, "wb") as file:
+        file.write(encrypted_data)
+
+def encrypt_all_files_in_folder(folder_path):
+    """Encrypts all files in a folder."""
+    for root, _, files in os.walk(folder_path):
+        for file_name in files:
+            file_path = os.path.join(root, file_name)
+            encrypt_file(file_path)
+            print(f"Encrypted: {file_path}")
+
+# Encrypt files in 'hidden_docs'
+encrypt_all_files_in_folder("hidden_docs")
 
 # Load the model
 @st.cache_resource
@@ -57,7 +81,11 @@ def clean_text(text):
 
 @st.cache_data
 def load_hidden_documents(directory="hidden_docs"):
-    """Load all supported file types from a directory and return their content."""
+    """Load and decrypt all supported file types from a directory, process them, and return their content."""
+    # Initialize Fernet with encryption key from Streamlit secrets
+    encryption_key = st.secrets["encryption_key"]
+    fernet = Fernet(encryption_key)
+
     all_texts = []
 
     for filename in os.listdir(directory):
@@ -65,61 +93,62 @@ def load_hidden_documents(directory="hidden_docs"):
         mime_type, _ = mimetypes.guess_type(file_path)
 
         try:
-            # Handle PDF files
+            # Decrypt file
+            with open(file_path, "rb") as encrypted_file:
+                encrypted_data = encrypted_file.read()
+            decrypted_data = fernet.decrypt(encrypted_data)
+
+            # Temporarily save decrypted data for processing
+            temp_file_path = f"temp_{filename}"
+            with open(temp_file_path, "wb") as temp_file:
+                temp_file.write(decrypted_data)
+
+            # Handle decrypted file based on its type
             if filename.endswith(".pdf"):
-                loader = PyPDFLoader(file_path)
+                loader = PyPDFLoader(temp_file_path)
                 pages = loader.load_and_split()
                 all_texts.extend([page.page_content for page in pages])
 
-            # Handle Word files (.docx)
             elif filename.endswith(".docx"):
-                doc = Document(file_path)
+                doc = Document(temp_file_path)
                 text = "\n".join([paragraph.text for paragraph in doc.paragraphs])
                 all_texts.append(text)
 
-            # Handle Text files (.txt)
             elif filename.endswith(".txt"):
-                with open(file_path, "r", encoding="utf-8") as file:
+                with open(temp_file_path, "r", encoding="utf-8") as file:
                     all_texts.append(file.read())
 
-            # Handle Excel files (.xlsx and .xls)
             elif filename.endswith(('.xlsx', '.xls')):
-                excel_data = pd.read_excel(file_path)
+                excel_data = pd.read_excel(temp_file_path)
                 text = excel_data.to_string(index=False)
                 all_texts.append(text)
 
-            # Handle CSV files (.csv)
             elif filename.endswith(".csv"):
-                csv_data = pd.read_csv(file_path)
+                csv_data = pd.read_csv(temp_file_path)
                 text = csv_data.to_string(index=False)
                 all_texts.append(text)
 
-            # Handle Markdown files (.md)
             elif filename.endswith(".md"):
-                with open(file_path, "r", encoding="utf-8") as file:
+                with open(temp_file_path, "r", encoding="utf-8") as file:
                     all_texts.append(file.read())
 
-            # Handle HTML files (.html, .htm)
             elif filename.endswith(('.html', '.htm')):
-                with open(file_path, "r", encoding="utf-8") as file:
+                with open(temp_file_path, "r", encoding="utf-8") as file:
                     soup = BeautifulSoup(file, "html.parser")
                     all_texts.append(soup.get_text())
 
-            # Handle JSON files (.json)
             elif filename.endswith(".json"):
-                with open(file_path, "r", encoding="utf-8") as file:
+                with open(temp_file_path, "r", encoding="utf-8") as file:
                     data = json.load(file)
                     all_texts.append(json.dumps(data, indent=2))
 
-            # Handle YAML files (.yaml, .yml)
             elif filename.endswith(('.yaml', '.yml')):
-                with open(file_path, "r", encoding="utf-8") as file:
+                with open(temp_file_path, "r", encoding="utf-8") as file:
                     data = yaml.safe_load(file)
                     all_texts.append(json.dumps(data, indent=2))
 
-            # Handle PowerPoint files (.pptx)
             elif filename.endswith(".pptx"):
-                presentation = Presentation(file_path)
+                presentation = Presentation(temp_file_path)
                 for slide in presentation.slides:
                     slide_text = []
                     for shape in slide.shapes:
@@ -127,26 +156,28 @@ def load_hidden_documents(directory="hidden_docs"):
                             slide_text.append(shape.text)
                     all_texts.append("\n".join(slide_text))
 
-            # Handle ZIP files (.zip)
             elif filename.endswith(".zip"):
-                with ZipFile(file_path, 'r') as zip_ref:
+                with ZipFile(temp_file_path, 'r') as zip_ref:
                     zip_ref.extractall("temp_extracted")
                     all_texts.extend(load_hidden_documents("temp_extracted"))
 
-            # Handle Log files (.log)
             elif filename.endswith(".log"):
-                with open(file_path, "r", encoding="utf-8") as file:
+                with open(temp_file_path, "r", encoding="utf-8") as file:
                     all_texts.append(file.read())
 
-            # Handle unknown file types (fallback to text-based reading)
             elif mime_type and mime_type.startswith("text"):
-                with open(file_path, "r", encoding="utf-8") as file:
+                with open(temp_file_path, "r", encoding="utf-8") as file:
                     all_texts.append(file.read())
+
+            # Clean up temporary file
+            os.remove(temp_file_path)
 
         except Exception as e:
             print(f"Failed to process {filename}: {e}")
+
     cleaned_texts = [clean_text(text) for text in all_texts]
     return cleaned_texts
+
 
 
 @st.cache_data
