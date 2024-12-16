@@ -15,5 +15,6 @@ pyyaml
 python-pptx
 xlrd
 openpyxl
+tempfile
 cryptography
 # pyyaml

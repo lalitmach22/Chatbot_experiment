@@ -20,11 +20,11 @@ from langchain.embeddings import HuggingFaceEmbeddings
 from supabase import create_client, Client
 
 # Supabase credentials
-url = "https://ycqqzosluyhqdwtnricr.supabase.co"
-key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljcXF6b3NsdXlocWR3dG5yaWNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQxODE5NjksImV4cCI6MjA0OTc1Nzk2OX0.Q-AmMeWuUkODkX27tg7YEN9bLvqz7v8qOHqpIucs_iw"
+url = os.getenv("url")
+key = os.getenv("key")
 supabase: Client = create_client(url, key)
 
-os.environ["GROQ_API_KEY"] = "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"
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 # Load the model
 @st.cache_resource
