@@ -128,12 +128,15 @@ all_texts = load_hidden_documents()
 def save_to_supabase(all_texts):
     """Save the list of documents to the Supabase 'all_texts' table."""
     for text in all_texts:
-        data = {"all_texts": text}  # Adjust column name if needed
+        data = {"all_texts": text}
         response = supabase.table("all_texts").insert(data).execute()
-        if response.error:
-            print(f"Error saving text: {response.error}")
+        
+        # Check response for success or failure
+        if response.status_code == 201:
+            print(f"Successfully saved: {text[:30]}...")
         else:
-            print(f"Successfully saved: {text[:30]}...")  # Show a preview of saved text
+            print(f"Failed to save text. Status Code: {response.status_code}, Response: {response.data}")
+
 
 save_to_supabase(all_texts)
 # Create vector store
