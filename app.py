@@ -123,7 +123,19 @@ def load_hidden_documents(directory="hidden_docs"):
             print(f"Failed to process {filename}: {e}")
 
     return all_texts
+all_texts = load_hidden_documents()
 
+def save_to_supabase(all_texts):
+    """Save the list of documents to the Supabase 'all_texts' table."""
+    for text in all_texts:
+        data = {"all_texts": text}  # Adjust column name if needed
+        response = supabase.table("all_texts").insert(data).execute()
+        if response.error:
+            print(f"Error saving text: {response.error}")
+        else:
+            print(f"Successfully saved: {text[:30]}...")  # Show a preview of saved text
+
+save_to_supabase(all_texts)
 # Create vector store
 @st.cache_resource
 def create_vector_store(document_texts):
@@ -134,7 +146,11 @@ def create_vector_store(document_texts):
 @st.cache_data
 def get_file_mod_times(directory):
     """Get the modification times of all files in the directory."""
-    return {f: os.path.getmtime(os.path.join(directory, f)) for f in os.listdir(directory) if f.endswith(".pdf")}
+    return {
+        f: os.path.getmtime(os.path.join(directory, f))
+        for f in os.listdir(directory)
+        if os.path.isfile(os.path.join(directory, f))  # Ensure it's a file, not a directory
+    }
 
 # Reload vector store if needed
 def reload_vector_store_if_needed():
