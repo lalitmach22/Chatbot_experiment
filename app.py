@@ -31,9 +31,9 @@ os.environ["GROQ_API_KEY"] = "gsk_LtkgzVGK1jXvylfSscJNWGdyb3FYeHjBfGKHv4NM9WBLjc
 def load_model():
     return ChatGroq(temperature=0.8, model="llama3-8b-8192")
 
-# Load PDF files
 @st.cache_data
 def load_hidden_documents(directory="hidden_docs"):
+    """Load all supported file types from a directory and return their content."""
     all_texts = []
 
     for filename in os.listdir(directory):
@@ -123,19 +123,22 @@ def load_hidden_documents(directory="hidden_docs"):
             print(f"Failed to process {filename}: {e}")
 
     return all_texts
-all_texts = load_hidden_documents()
 
+@st.cache_data
 def save_to_supabase(all_texts):
-    """Save the list of documents to the Supabase 'all_texts' table."""
-    for text in all_texts:
-        data = {"all_texts": text}
-        response = supabase.table("all_texts").insert(data).execute()
-        
-        # Check response for success or failure
-        if response.status_code == 201:
-            print(f"Successfully saved: {text[:30]}...")
-        else:
-            print(f"Failed to save text. Status Code: {response.status_code}, Response: {response.data}")
+    """Save all texts to the Supabase 'all_texts' table in a single batch."""
+    data = [{"all_texts": text} for text in all_texts]  # Prepare data for batch insert
+    response = supabase.table("all_texts").insert(data).execute()
+
+    if response.status_code == 201:
+        print("Successfully saved all texts to Supabase.")
+    else:
+        print(f"Failed to save texts. Status Code: {response.status_code}, Response: {response.data}")
+
+
+# Load documents and save to Supabase
+all_texts = load_hidden_documents()
+save_to_supabase(all_texts)
 
 
 save_to_supabase(all_texts)
