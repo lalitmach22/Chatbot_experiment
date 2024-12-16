@@ -50,7 +50,7 @@ def encrypt_all_files_in_folder(folder_path):
             print(f"Encrypted: {file_path}")
 
 # Encrypt files in 'hidden_docs'
-encrypt_all_files_in_folder("hidden_docs")
+encrypt_all_files_in_folder(directory="hidden_docs")
 
 # Load the model
 @st.cache_resource
@@ -177,8 +177,6 @@ def load_hidden_documents(directory="hidden_docs"):
 
     cleaned_texts = [clean_text(text) for text in all_texts]
     return cleaned_texts
-
-
 
 @st.cache_data
 def save_to_supabase(all_texts):
