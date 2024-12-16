@@ -59,7 +59,7 @@ def load_hidden_documents(bucket_name="hidden_docs"):
 
     st.write(f"Type of RESPONSE is {type(response)}")  # Inspect the type of response
     st.write(response)  # Inspect the structure of response
-
+    st.write(len(response))
 # Ensure the response contains a 'data' field as that's where the file information is typically stored
     if "data" in response:
         for file_info in response["data"]:  # Use 'data' key to access the files
