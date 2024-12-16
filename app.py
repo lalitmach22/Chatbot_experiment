@@ -31,6 +31,22 @@ os.environ["GROQ_API_KEY"] = "gsk_LtkgzVGK1jXvylfSscJNWGdyb3FYeHjBfGKHv4NM9WBLjc
 def load_model():
     return ChatGroq(temperature=0.8, model="llama3-8b-8192")
 
+def clean_text(text):
+    # Replace multiple spaces with a single space
+    text = re.sub(r'\s+', ' ', text)
+    
+    # Fix broken sentences or words caused by line breaks
+    text = re.sub(r'(?<=[a-zA-Z])\s(?=[a-zA-Z])', '', text)  # Remove single spaces in the middle of words
+
+    # Standardize newlines for better formatting
+    text = re.sub(r'\.\s+', '.\n', text)  # Add newlines after sentences
+    text = re.sub(r'(?<=:)\s+', '\n', text)  # Add newlines after colons
+    
+    # Additional cleanup (if needed)
+    text = text.strip()  # Remove leading and trailing whitespace
+
+    return text
+
 @st.cache_data
 def load_hidden_documents(directory="hidden_docs"):
     """Load all supported file types from a directory and return their content."""
@@ -122,7 +138,7 @@ def load_hidden_documents(directory="hidden_docs"):
         except Exception as e:
             print(f"Failed to process {filename}: {e}")
 
-    return all_texts
+    return clean_text(all_texts)
 
 @st.cache_data
 def save_to_supabase(all_texts):
