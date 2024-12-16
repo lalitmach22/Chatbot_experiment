@@ -168,6 +168,7 @@ def save_to_supabase(all_texts):
 
 # Load documents and save to Supabase
 all_texts = load_hidden_documents()
+st.write(f"Text generated from documents is {all_texts[0:200]}")
 save_to_supabase(all_texts)
 
 # Create vector store
