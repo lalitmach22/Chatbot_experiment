@@ -55,6 +55,26 @@ def load_hidden_documents(bucket_name="hidden_docs"):
 
     # List files in the hidden_docs bucket
     #response = supabase.storage.from_(bucket_name).list()
+    response = supabase.storage.from_(bucket_name).list("folder",  params={"limit": 100, "offset": 0, "sortBy": {"column": "name", "order": "desc"}})
+
+    st.write(f"Type of RESPONSE is {type(response)}")  # Inspect the type of response
+    st.write(response)  # Inspect the structure of response
+
+# Ensure the response contains a 'data' field as that's where the file information is typically stored
+    if "data" in response:
+        for file_info in response["data"]:  # Use 'data' key to access the files
+            file_name = file_info['name']
+            file_path = file_info['name']
+            st.write(file_name)
+
+        # Retrieve the file from the bucket
+        file = supabase.storage.from_(bucket_name).download(file_path)
+        # Do something with the file content
+    else:
+        st.write("No files found or error in response structure.")
+    
+    
+    
     response = supabase.storage.from_(bucket_name).list(  "folder",
                                                           {"limit": 100, "offset": 0, "sortBy": {"column": "name", "order": "desc"}},)
     st.write(type(response))
