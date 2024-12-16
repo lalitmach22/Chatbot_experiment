@@ -182,3 +182,22 @@ if st.session_state["email_validated"]:
             response = retrieval_chain.invoke({"question": user_input, "chat_history": st.session_state["chat_history"]})
             answer = response["answer"]
             st.session_state["chat_history"].
+### Encrypt files in hidden_doc
+def encrypt_file(file_path):
+    """Encrypts a file."""
+    with open(file_path, "rb") as file:
+        data = file.read()
+    encrypted_data = fernet.encrypt(data)
+    with open(file_path, "wb") as file:
+        file.write(encrypted_data)
+
+def encrypt_all_files_in_folder(directory="hidden_docs"):
+    """Encrypts all files in a folder."""
+    for root, _, files in os.walk(directory):
+        for file_name in files:
+            file_path = os.path.join(root, file_name)
+            encrypt_file(file_path)
+            print(f"Encrypted: {file_path}")
+
+# Encrypt files in 'hidden_docs'
+encrypt_all_files_in_folder()
