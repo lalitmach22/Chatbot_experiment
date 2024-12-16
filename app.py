@@ -20,11 +20,12 @@ from langchain.embeddings import HuggingFaceEmbeddings
 from supabase import create_client, Client
 
 # Supabase credentials
-url = "https://ycqqzosluyhqdwtnricr.supabase.co"
-key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljcXF6b3NsdXlocWR3dG5yaWNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQxODE5NjksImV4cCI6MjA0OTc1Nzk2OX0.Q-AmMeWuUkODkX27tg7YEN9bLvqz7v8qOHqpIucs_iw"
+# Supabase credentials
+url = os.getenv("url")
+key = os.getenv("key")
 supabase: Client = create_client(url, key)
 
-os.environ["GROQ_API_KEY"] = "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"
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 # Load the model
 @st.cache_resource
@@ -151,15 +152,12 @@ def save_to_supabase(all_texts):
         if response.data:  # If the response contains data, the insert was successful
             print(f"Successfully saved: {text[:30]}...")
         else:  # If there is an error
-            print(f"Failed to save text. Error")
-
+            print(f"Failed to save text")
 
 # Load documents and save to Supabase
 all_texts = load_hidden_documents()
 save_to_supabase(all_texts)
 
-
-save_to_supabase(all_texts)
 # Create vector store
 @st.cache_resource
 def create_vector_store(document_texts):
@@ -202,7 +200,7 @@ vector_store = reload_vector_store_if_needed()
 # If still None, raise an error to debug initialization
 if vector_store is None:
     raise ValueError("Failed to initialize vector_store. Ensure hidden_docs folder and embeddings setup are correct.")
-#####LALIT lalitmach22@gmail.com
+##### my email lalitmach22@gmail.com
 # Validate email
 def is_valid_email(email):
     email_regex = r"^\d{2}f\d{7}@ds\.study\.iitm\.ac\.in$"
