@@ -57,7 +57,7 @@ def load_hidden_documents(bucket_name="hidden_docs"):
     response = supabase.storage.from_(bucket_name).list()
     st.write(type(response))
     st.write(response)
-    for file_info in response['data']:
+    for file_info in response:
         file_name = file_info['name']
         file_path = file_info['name']
         st.write(file_name)
