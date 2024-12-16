@@ -60,8 +60,8 @@ def load_hidden_documents(bucket_name="hidden_docs"):
 
     # List files in the specified folder of the bucket
     response = supabase.storage.from_(bucket_name).list(
-        "folder",  # Specify the folder
-        {"limit": 100, "offset": 0, "sortBy": {"column": "name", "order": "desc"}}  # Pagination and sorting
+        "folder1",  # Specify the folder
+        {"limit": 1000, "offset": 0, "sortBy": {"column": "name", "order": "desc"}}  # Pagination and sorting
     )
 
     # Check if response contains files
