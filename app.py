@@ -137,8 +137,8 @@ def load_hidden_documents(directory="hidden_docs"):
 
         except Exception as e:
             print(f"Failed to process {filename}: {e}")
-
-    return clean_text(all_texts)
+    cleaned_texts = [clean_text(text) for text in all_texts]
+    return cleaned_texts
 
 @st.cache_data
 def save_to_supabase(all_texts):
