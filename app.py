@@ -34,21 +34,26 @@ def load_model():
     return ChatGroq(temperature=0.8, model="llama3-8b-8192")
 
 def clean_text(text):
+    import re  # Ensure re is imported for regex operations
+
     # Replace multiple spaces with a single space
     text = re.sub(r'\s+', ' ', text)
+
+    # Fix words broken by line breaks or formatting
+    # Matches a lowercase/uppercase word followed by a line break without a space
+    text = re.sub(r'(?<=[a-zA-Z])(?=[A-Z])', ' ', text)  # Add space between words when they are stuck together
     
-    # Fix broken sentences or words caused by line breaks
-    text = re.sub(r'(?<=[a-zA-Z])\s(?=[a-zA-Z])', '', text)  # Remove single spaces in the middle of words
+    # Fix punctuation followed by words with no space
+    text = re.sub(r'(?<=[.,?!;])(?=[a-zA-Z])', ' ', text)  # Add space after punctuation if missing
 
     # Standardize newlines for better formatting
     text = re.sub(r'\.\s+', '.\n', text)  # Add newlines after sentences
     text = re.sub(r'(?<=:)\s+', '\n', text)  # Add newlines after colons
-    
+
     # Additional cleanup (if needed)
     text = text.strip()  # Remove leading and trailing whitespace
 
     return text
-
 
 @st.cache_data
 def load_hidden_documents(directory="hidden_docs"):
