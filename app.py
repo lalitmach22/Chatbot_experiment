@@ -63,7 +63,8 @@ def load_hidden_documents(bucket_name="hidden_docs"):
         "folder",  # Specify the folder
         {"limit": 1000, "offset": 0, "sortBy": {"column": "name", "order": "desc"}}  # Pagination and sorting
     )
-
+    st.write(f" RESPONSE IS {response} and type of response is{type(response)}")
+    st.write("PROBLEM OCCURRING HERE")
     # Check if response contains files
     if "data" in response:
         for file_info in response["data"]:  # Iterate through files in the response
