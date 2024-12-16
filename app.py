@@ -49,6 +49,7 @@ def clean_text(text):
 
     return text
 
+
 @st.cache_data
 def load_hidden_documents(directory="hidden_docs"):
     """Load all supported file types from a directory and return their content."""
