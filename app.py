@@ -54,7 +54,9 @@ def load_hidden_documents(bucket_name="hidden_docs"):
     all_texts = []
 
     # List files in the hidden_docs bucket
-    response = supabase.storage.from_(bucket_name).list()
+    #response = supabase.storage.from_(bucket_name).list()
+    response = supabase.storage.from_(bucket_name).list(  "folder",
+                                                          {"limit": 100, "offset": 0, "sortBy": {"column": "name", "order": "desc"}},)
     st.write(type(response))
     st.write(response)
     for file_info in response:
