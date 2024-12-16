@@ -12,6 +12,7 @@ import yaml
 from pptx import Presentation
 from zipfile import ZipFile
 import mimetypes 
+import tempfile
 from langchain_groq import ChatGroq
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.chains import ConversationalRetrievalChain
@@ -49,125 +50,122 @@ def clean_text(text):
     return text
 
 @st.cache_data
+@st.cache_data
 def load_hidden_documents(bucket_name="hidden_docs"):
     """Load all supported file types from the hidden_docs bucket and return their content."""
     all_texts = []
 
-    # List files in the hidden_docs bucket
-    #response = supabase.storage.from_(bucket_name).list()
-    response = supabase.storage.from_(bucket_name).list("")
+    # Create a temporary directory to store downloaded files
+    temp_dir = tempfile.mkdtemp()
 
+    # List files in the specified folder of the bucket
+    response = supabase.storage.from_(bucket_name).list(
+        "folder",  # Specify the folder
+        {"limit": 100, "offset": 0, "sortBy": {"column": "name", "order": "desc"}}  # Pagination and sorting
+    )
 
-    st.write(f"Type of RESPONSE is {type(response)}")  # Inspect the type of response
-    st.write(response)  # Inspect the structure of response
-    st.write(len(response))
-# Ensure the response contains a 'data' field as that's where the file information is typically stored
+    # Check if response contains files
     if "data" in response:
-        for file_info in response["data"]:  # Use 'data' key to access the files
+        for file_info in response["data"]:  # Iterate through files in the response
             file_name = file_info['name']
             file_path = file_info['name']
-            st.write(file_name)
 
-        # Retrieve the file from the bucket
-        file = supabase.storage.from_(bucket_name).download(file_path)
-        # Do something with the file content
+            # Download the file to the temporary folder
+            file_local_path = os.path.join(temp_dir, file_name)
+            file = supabase.storage.from_(bucket_name).download(file_path)
+            
+            if file.get('status_code') == 200:
+                file_content = file['data']
+
+                mime_type, _ = mimetypes.guess_type(file_path)
+
+                try:
+                    # Handle PDF files
+                    if file_name.endswith(".pdf"):
+                        loader = PyPDFLoader(BytesIO(file_content))
+                        pages = loader.load_and_split()
+                        all_texts.extend([page.page_content for page in pages])
+
+                    # Handle Word files (.docx)
+                    elif file_name.endswith(".docx"):
+                        doc = Document(BytesIO(file_content))
+                        text = "\n".join([paragraph.text for paragraph in doc.paragraphs])
+                        all_texts.append(text)
+
+                    # Handle Text files (.txt)
+                    elif file_name.endswith(".txt"):
+                        all_texts.append(file_content.decode("utf-8"))
+
+                    # Handle Excel files (.xlsx and .xls)
+                    elif file_name.endswith(('.xlsx', '.xls')):
+                        excel_data = pd.read_excel(BytesIO(file_content))
+                        text = excel_data.to_string(index=False)
+                        all_texts.append(text)
+
+                    # Handle CSV files (.csv)
+                    elif file_name.endswith(".csv"):
+                        csv_data = pd.read_csv(BytesIO(file_content))
+                        text = csv_data.to_string(index=False)
+                        all_texts.append(text)
+
+                    # Handle Markdown files (.md)
+                    elif file_name.endswith(".md"):
+                        all_texts.append(file_content.decode("utf-8"))
+
+                    # Handle HTML files (.html, .htm)
+                    elif file_name.endswith(('.html', '.htm')):
+                        soup = BeautifulSoup(file_content, "html.parser")
+                        all_texts.append(soup.get_text())
+
+                    # Handle JSON files (.json)
+                    elif file_name.endswith(".json"):
+                        data = json.loads(file_content.decode("utf-8"))
+                        all_texts.append(json.dumps(data, indent=2))
+
+                    # Handle YAML files (.yaml, .yml)
+                    elif file_name.endswith(('.yaml', '.yml')):
+                        data = yaml.safe_load(file_content.decode("utf-8"))
+                        all_texts.append(json.dumps(data, indent=2))
+
+                    # Handle PowerPoint files (.pptx)
+                    elif file_name.endswith(".pptx"):
+                        presentation = Presentation(BytesIO(file_content))
+                        for slide in presentation.slides:
+                            slide_text = []
+                            for shape in slide.shapes:
+                                if shape.has_text_frame:
+                                    slide_text.append(shape.text)
+                            all_texts.append("\n".join(slide_text))
+
+                    # Handle ZIP files (.zip)
+                    elif file_name.endswith(".zip"):
+                        with zipfile.ZipFile(BytesIO(file_content), 'r') as zip_ref:
+                            zip_ref.extractall(temp_dir)
+                            # Recursively process files in the ZIP
+                            all_texts.extend(load_hidden_documents(temp_dir))
+
+                    # Handle Log files (.log)
+                    elif file_name.endswith(".log"):
+                        all_texts.append(file_content.decode("utf-8"))
+
+                    # Handle unknown file types (fallback to text-based reading)
+                    elif mime_type and mime_type.startswith("text"):
+                        all_texts.append(file_content.decode("utf-8"))
+
+                except Exception as e:
+                    print(f"Failed to process {file_name}: {e}")
+            else:
+                print(f"Failed to retrieve file: {file_name}")
+        
     else:
         st.write("No files found or error in response structure.")
-    
-    
-    
-    response = supabase.storage.from_(bucket_name).list(  "",
-                                                          {"limit": 100, "offset": 0, "sortBy": {"column": "name", "order": "desc"}},)
-    st.write(type(response))
-    st.write(response)
-    for file_info in response:
-        file_name = file_info['name']
-        file_path = file_info['name']
-        st.write(file_name)
-        # Retrieve the file from the bucket
-        file = supabase.storage.from_(bucket_name).download(file_path)
 
-        if file.get('status_code') == 200:
-            file_content = file['data']
-
-            mime_type, _ = mimetypes.guess_type(file_path)
-
-            try:
-                # Handle PDF files
-                if file_name.endswith(".pdf"):
-                    loader = PyPDFLoader(BytesIO(file_content))
-                    pages = loader.load_and_split()
-                    all_texts.extend([page.page_content for page in pages])
-
-                # Handle Word files (.docx)
-                elif file_name.endswith(".docx"):
-                    doc = Document(BytesIO(file_content))
-                    text = "\n".join([paragraph.text for paragraph in doc.paragraphs])
-                    all_texts.append(text)
-
-                # Handle Text files (.txt)
-                elif file_name.endswith(".txt"):
-                    all_texts.append(file_content.decode("utf-8"))
-
-                # Handle Excel files (.xlsx and .xls)
-                elif file_name.endswith(('.xlsx', '.xls')):
-                    excel_data = pd.read_excel(BytesIO(file_content))
-                    text = excel_data.to_string(index=False)
-                    all_texts.append(text)
-
-                # Handle CSV files (.csv)
-                elif file_name.endswith(".csv"):
-                    csv_data = pd.read_csv(BytesIO(file_content))
-                    text = csv_data.to_string(index=False)
-                    all_texts.append(text)
-
-                # Handle Markdown files (.md)
-                elif file_name.endswith(".md"):
-                    all_texts.append(file_content.decode("utf-8"))
-
-                # Handle HTML files (.html, .htm)
-                elif file_name.endswith(('.html', '.htm')):
-                    soup = BeautifulSoup(file_content, "html.parser")
-                    all_texts.append(soup.get_text())
-
-                # Handle JSON files (.json)
-                elif file_name.endswith(".json"):
-                    data = json.loads(file_content.decode("utf-8"))
-                    all_texts.append(json.dumps(data, indent=2))
-
-                # Handle YAML files (.yaml, .yml)
-                elif file_name.endswith(('.yaml', '.yml')):
-                    data = yaml.safe_load(file_content.decode("utf-8"))
-                    all_texts.append(json.dumps(data, indent=2))
-
-                # Handle PowerPoint files (.pptx)
-                elif file_name.endswith(".pptx"):
-                    presentation = Presentation(BytesIO(file_content))
-                    for slide in presentation.slides:
-                        slide_text = []
-                        for shape in slide.shapes:
-                            if shape.has_text_frame:
-                                slide_text.append(shape.text)
-                        all_texts.append("\n".join(slide_text))
-
-                # Handle ZIP files (.zip)
-                elif file_name.endswith(".zip"):
-                    with zipfile.ZipFile(BytesIO(file_content), 'r') as zip_ref:
-                        zip_ref.extractall("temp_extracted")
-                        all_texts.extend(load_hidden_documents("temp_extracted"))
-
-                # Handle Log files (.log)
-                elif file_name.endswith(".log"):
-                    all_texts.append(file_content.decode("utf-8"))
-
-                # Handle unknown file types (fallback to text-based reading)
-                elif mime_type and mime_type.startswith("text"):
-                    all_texts.append(file_content.decode("utf-8"))
-
-            except Exception as e:
-                print(f"Failed to process {file_name}: {e}")
-        else:
-            print(f"Failed to retrieve file: {file_name}")
+    # Clean up temporary folder
+    for file_name in os.listdir(temp_dir):
+        file_path = os.path.join(temp_dir, file_name)
+        if os.path.isfile(file_path):
+            os.remove(file_path)
+    os.rmdir(temp_dir)  # Remove the empty temporary folder
 
     # Clean and return all the extracted texts
     cleaned_texts = [clean_text(text) for text in all_texts]
