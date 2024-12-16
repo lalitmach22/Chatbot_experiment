@@ -150,8 +150,8 @@ def save_to_supabase(all_texts):
         # Check the response for success or failure
         if response.data:  # If the response contains data, the insert was successful
             print(f"Successfully saved: {text[:30]}...")
-        elif response.error:  # If there is an error
-            print(f"Failed to save text. Error: {response.error.message}")
+        else:  # If there is an error
+            print(f"Failed to save text. Error")
 
 
 # Load documents and save to Supabase
