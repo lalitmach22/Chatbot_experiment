@@ -55,7 +55,7 @@ def load_hidden_documents(bucket_name="hidden_docs"):
 
     # List files in the hidden_docs bucket
     #response = supabase.storage.from_(bucket_name).list()
-    response = supabase.storage.from_(bucket_name).list()
+    response = supabase.storage.from_(bucket_name).list("")
 
 
     st.write(f"Type of RESPONSE is {type(response)}")  # Inspect the type of response
