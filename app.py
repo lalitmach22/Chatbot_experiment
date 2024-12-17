@@ -231,7 +231,7 @@ st.title("BDM Chatbot")
 st.write("Developed by Lalit & Puneet, students of BS (Applications & Data Science) IIT Madras")
 st.write("We encourage you to ask clear and relevant questions to ensure meaningful responses. Remember, Garbage In, Garbage Out.")
 st.write("Once you have completed your queries, kindly conclude with the word stop.")
-st.write("Disclaimer:All interactions, including questions and answers, are recorded to help us enhance the bot's functionality. By using this chatbot, you agree to the storage of this data.")
+st.write("Disclaimer: All interactions, including questions and answers, are recorded to help us enhance the bot's functionality. By using this chatbot, you agree to the storage of this data.")
 st.write("Disclaimer: While this chatbot strives to provide accurate responses, it may occasionally make errors. For verified and comprehensive information, please refer to the official project documents or consult the appropriate team members/mentors.")
 # Load model and vector store
 model = load_model()
