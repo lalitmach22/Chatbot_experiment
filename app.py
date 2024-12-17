@@ -300,7 +300,7 @@ if st.session_state["email_validated"]:
 
             # Save session data to Supabase
             if save_session_to_supabase(email, name, st.session_state["chat_history"]):
-                st.success("Session data successfully saved to Supabase!")
+                st.success("Session data successfully saved to Supabase! Refresh to start a new session")
 
             # Allow download of session data
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
