@@ -21,7 +21,6 @@ from langchain_community.embeddings import HuggingFaceEmbeddings
 from supabase import create_client, Client
 
 # Supabase credentials
-# Supabase credentials
 url = os.getenv("url")
 key = os.getenv("key")
 supabase: Client = create_client(url, key)
@@ -34,25 +33,17 @@ def load_model():
     return ChatGroq(temperature=0.8, model="llama3-8b-8192")
 
 def clean_text(text):
-    import re  # Ensure re is imported for regex operations
-
     # Replace multiple spaces with a single space
     text = re.sub(r'\s+', ' ', text)
-
     # Fix words broken by line breaks or formatting
     # Matches a lowercase/uppercase word followed by a line break without a space
-    text = re.sub(r'(?<=[a-zA-Z])(?=[A-Z])', ' ', text)  # Add space between words when they are stuck together
-    
+    text = re.sub(r'(?<=[a-zA-Z])(?=[A-Z])', ' ', text)  # Add space between words when they are stuck together    
     # Fix punctuation followed by words with no space
     text = re.sub(r'(?<=[.,?!;])(?=[a-zA-Z])', ' ', text)  # Add space after punctuation if missing
-
     # Standardize newlines for better formatting
     text = re.sub(r'\.\s+', '.\n', text)  # Add newlines after sentences
     text = re.sub(r'(?<=:)\s+', '\n', text)  # Add newlines after colons
-
-    # Additional cleanup (if needed)
-    text = text.strip()  # Remove leading and trailing whitespace
-
+    # Additional cleanup (if needed)    text = text.strip()  # Remove leading and trailing whitespace
     return text
 
 @st.cache_data
@@ -148,20 +139,18 @@ def load_hidden_documents(directory="hidden_docs"):
     cleaned_texts = [clean_text(text) for text in all_texts]
     return cleaned_texts
 
-
 @st.cache_data
 def save_to_supabase(all_texts):
     """Save the list of documents to the Supabase 'all_texts' table."""
     for text in all_texts:
         data = {"all_texts": text}
-        response = supabase.table("all_texts").insert(data).execute()
-        
+        response = supabase.table("all_texts").insert(data).execute()        
         # Check the response for success or failure
         if response.data:  # If the response contains data, the insert was successful
             print(f"Successfully saved: {text[:30]}...")
         else:  # If there is an error
             print(f"Failed to save text")
-
+            
 # Load documents and save to Supabase
 all_texts = load_hidden_documents()
 save_to_supabase(all_texts)
@@ -295,10 +284,11 @@ if elapsed_time > timedelta(minutes=30):
     )
     st.stop()
 
+
 # Chat functionality
 if st.session_state["email_validated"]:
     user_input = st.text_input("Pose your Questions:")
-    
+
     if user_input:
         if user_input.lower() == "stop":
             st.write("Chatbot: Goodbye!")
@@ -329,8 +319,17 @@ if st.session_state["email_validated"]:
             st.session_state["chat_history"].append((user_input, answer))
             
             # Display the chat history
-            # Display the chat history (most recent first)
-            for i, (question, reply) in enumerate(reversed(st.session_state["chat_history"]), 1):
-                st.write(f"Q{i}: {question}")
-                st.write(f"Chatbot: {reply}")
+            st.subheader("Chat History")
+            
+            # Use a container to make the chat scrollable
+            with st.container():
+                for i, (question, reply) in enumerate(reversed(st.session_state["chat_history"]), 1):
+                    st.markdown(f"**Q{i}:** {question}")
+                    st.markdown(f"**Chatbot:** {reply}")
+            
+            # Display the latest answer at the bottom
+            st.divider()
+            st.markdown("**Latest Reply:**")
+            st.markdown(f"**Chatbot:** {answer}")
+
 
