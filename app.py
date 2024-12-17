@@ -229,7 +229,7 @@ def save_session_to_supabase(email, name, chat_history):
 # Streamlit app
 st.title("BDM Chatbot")
 st.write("Developed by Lalit & Puneet, students of BS (Applications & Data Science) IIT Madras")
-st.write("Ask questions directly based on the preloaded BDM documents.")
+st.write("Ask relevant questions only, remember Garbage In Garbage Out")
 st.write("Note - Once your queries are complete, please put the last query as \"stop\".")
 st.write("Disclaimer - All data, including questions and answers, is collected for improving the bot’s functionality. By using this bot, you consent to this data being stored.")
 st.write("Disclaimer - This chatbot can make mistakes. For verified and detailed information, please refer to the official project documents or consult the relevant team members/mentors.")
