@@ -270,7 +270,7 @@ elif email:
 # Check session time limit
 elapsed_time = datetime.now() - st.session_state["session_start_time"]
 if elapsed_time > timedelta(minutes=30):
-    st.warning("Session time has exceeded 30 minutes. The chatbot will stop now.")
+    st.warning("Session time has exceeded 30 minutes. The chatbot will stop now. Refresh to start a new session")
     
     # Save session data to Supabase
     if save_session_to_supabase(email, name, st.session_state["chat_history"]):
