@@ -323,13 +323,10 @@ if st.session_state["email_validated"]:
             
             # Use a container to make the chat scrollable
             with st.container():
-                for i, (question, reply) in enumerate(reversed(st.session_state["chat_history"]), 1):
+                for i, (question, reply) in enumerate(st.session_state["chat_history"], 1):
                     st.markdown(f"**Q{i}:** {question}")
                     st.markdown(f"**Chatbot:** {reply}")
             
-            # Display the latest answer at the bottom
-            st.divider()
-            st.markdown("**Latest Reply:**")
-            st.markdown(f"**Chatbot:** {answer}")
+            
 
 
