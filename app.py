@@ -219,7 +219,7 @@ def save_session_to_supabase(email, name, chat_history):
             "answer": answer,
             "timestamp": timestamp,  # Add IST timestamp
         }
-        response = supabase.table("chat_sessions").insert(data).execute()
+        response = supabase.table("chat_sessions_1").insert(data).execute()
         if "error" in response:
             st.error(f"Error saving session data to Supabase: {response['error']['message']}")
             return False
