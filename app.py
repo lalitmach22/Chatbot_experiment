@@ -21,7 +21,7 @@ from langchain_community.embeddings import HuggingFaceEmbeddings
 from supabase import create_client, Client
 
 # Supabase credentials
-url = os.getenv("url")
+url = os.getenv("url") #in streamlit secret
 key = os.getenv("key")
 supabase: Client = create_client(url, key)
 
